@@ -1,0 +1,35 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant::Config.run do |config|
+
+  #Configuración de la box
+  config.vm.box = "ubuntu1204"
+
+  #Linea de aprovisionamiento y asegúrese de que nuestras fuentes estén actualizadas ...
+  config.vm.provision :shell, :inline => "apt-get update --fix-missing"
+
+  #Configuración de la box appserver
+  config.vm.define "appserver" do |app|
+    # no muestra una ventana de VirtualBox
+    app.vm.boot_mode = :headless
+    #app.vm.network :hostonly, "66.66.66.10"
+    #Puenteo de la VM en la interfaz eth0 del host
+    app.vm.network :bridged, :bridge => "eth0"
+    #Puppet no funciona si el nombre de host no es un FQDN ...
+    app.vm.host_name = "appserver00.local"
+
+    app.vm.provision :puppet do |puppet|
+
+      #cambiar fqdn para dar para cambiar el host virtual vm
+      puppet.facter = { 
+        "fqdn" => "appserver00.local", 
+      }
+
+      puppet.module_path = "puppet/modules"
+      puppet.manifests_path = "puppet/manifests"
+      puppet.manifest_file = "appserver.pp"
+    end
+  end
+
+end
